@@ -1,0 +1,22 @@
+#!/bin/ash
+
+run_command() {
+    echo ==================================
+    echo " $@":
+    echo ==================================
+    echo
+    $@
+    echo
+    echo
+}
+
+echo
+run_command ffh_nodeinfo
+run_command uptime
+run_command ip addr
+run_command ip route
+run_command ip link
+run_command batctl n
+run_command batctl gwl
+run_command logread
+run_command dmesg
