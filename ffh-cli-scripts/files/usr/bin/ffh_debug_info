@@ -12,6 +12,7 @@ run_command() {
 
 echo
 run_command ffh_nodeinfo
+run_command date
 run_command uptime
 run_command ip addr
 run_command ip route
