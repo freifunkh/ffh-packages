@@ -1,5 +1,5 @@
 #!/usr/bin/lua
-local public = "52ea839a5d105f1e4e4558f02a934bb04eb45c117c761a6166b5f02a0f98332e"
+local public = "da413608a7732bc02acc89080008d01094e1febaf1bf3a92d1aa4d13b42e4ccc"
 
 local devurandom = io.open("/dev/urandom","rb")
 local b1,b2 = devurandom:read(2):byte(1,2)
