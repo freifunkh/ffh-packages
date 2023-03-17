@@ -6,9 +6,7 @@ PKG_RELEASE:=1
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 
-# this includes lua minifying routine (GluonSrcDiet)
-# and also imports the normal $(INCLUDE_DIR)/package.mk
-include $(GLUONDIR)/include/package.mk
+include $(INCLUDE_DIR)/package.mk
 
 define Package/ffh-district-migrate
   SECTION:=gluon
