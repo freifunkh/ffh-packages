@@ -1,6 +1,0 @@
-#!/bin/sh
-
-addr=update-verify.ffh
-challenge="$(uci show network.bat0.macaddr | cut -d"=" -f 2 | tr -d \')"
-
-echo -n "FLASH:$challenge" | nc $addr 12345
