@@ -7,7 +7,11 @@ if [ $# -lt 1 ]; then
 	exit 1;
 fi
 
-all=$(uci show fastd | grep mesh_vpn_backbone_peer_ | grep enabled)
+if test -f /usr/bin/wg; then
+	all=$(uci show wgpeerselector | grep enabled)
+else
+	all=$(uci show fastd | grep mesh_vpn_backbone_peer_ | grep enabled)
+fi
 
 echo "BEFORE:"
 echo "======="
@@ -24,7 +28,11 @@ echo "$cmd" | uci batch
 echo
 
 
-after=$(uci show fastd | grep mesh_vpn_backbone_peer_ | grep enabled)
+if test -f /usr/bin/wg; then
+	after=$(uci show wgpeerselector | grep enabled)
+else
+	after=$(uci show fastd | grep mesh_vpn_backbone_peer_ | grep enabled)
+fi
 
 echo "AFTER:"
 echo "======"
@@ -32,9 +40,14 @@ echo "$after"
 
 echo
 if [ "$all" != "$after" ]; then
-	echo Config changed. Uci commit. Restarting fastd.
-	uci commit fastd
-	/etc/init.d/fastd restart
+	echo Config changed. Uci commit. Applying config.
+	if test -f /usr/bin/wg; then
+		uci commit wgpeerselector
+		ifdown wg_mesh && sleep 1 && ifup wg_mesh
+	else
+		uci commit fastd
+		/etc/init.d/fastd restart
+	fi
 else
 	echo Config unchanged.
 fi
