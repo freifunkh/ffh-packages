@@ -43,7 +43,7 @@ if [ "$all" != "$after" ]; then
 	echo Config changed. Uci commit. Applying config.
 	if test -f /usr/bin/wg; then
 		uci commit wgpeerselector
-		ifdown wg_mesh && sleep 1 && ifup wg_mesh
+		ifdown wg_mesh && sleep 4 && ifup wg_mesh
 	else
 		uci commit fastd
 		/etc/init.d/fastd restart
