@@ -19,7 +19,7 @@ for iface in $mesh_ifs; do
 	name="${iface}${suffix}"
 	echo "${name}:"
 	echo "${name}:" | sed 's_._-_g'
-	res=$(gluon-neighbour-info -d ff02::2:1001 -p 1001 -r nodeinfo -i ${iface} -t 0.1 | grep -v "${node_id}")
+	res=$(gluon-neighbour-info -d ff02::2:1001 -p 1001 -r nodeinfo -i ${iface} -t 1 | grep -v "${node_id}")
 	echo ${res} | jsonfilter -a -e '@.*.hostname'
 	all_res=$(echo "${all_res}"; echo "${res}")
 	echo
