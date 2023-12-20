@@ -29,6 +29,16 @@ uci_bool() {
 	bool_to_text "$res" "$2" "$3"
 }
 
+get_vpn() {
+	if [ "$(get software.fastd.enabled)" == "true" ]; then
+		echo "fastd"
+	elif [ "$(get software.wireguard.enabled)" == "true" ]; then
+		echo "wireguard"
+	else
+		echo "disabled"
+	fi
+}
+
 
 cat <<EOF
 
@@ -37,13 +47,13 @@ cat <<EOF
         owner: $(get owner.contact)
      location: lat=$(get location.latitude) lon=$(get location.longitude)
         model: $(get hardware.model)
-     
+
   autoupdater: $(get_bool software.autoupdater.enabled enabled disabled), branch: $(get software.autoupdater.branch)
-        fastd: $(get_bool software.fastd.enabled enabled disabled)
+          vpn: $(get_vpn)
      firmware: $(get software.firmware.release)
        domain: $(get system.domain_code)
 
- fastd pubkey: $(/etc/init.d/fastd show_key mesh_vpn)
+   vpn pubkey: $(get software.fastd.public_key)$(get software.wireguard.public_key)
 
   mesh on lan: $(get_bool network.mesh_lan.disabled active no)
   mesh on wan: $(get_bool network.mesh_wan.disabled active no)
