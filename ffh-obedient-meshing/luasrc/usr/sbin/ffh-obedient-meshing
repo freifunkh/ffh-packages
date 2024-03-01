@@ -1,0 +1,152 @@
+#!/usr/bin/lua
+local uci = require("simple-uci").cursor()
+local iwinfo = require "iwinfo"
+local util = require "gluon.util"
+local json = require "jsonc"
+local sys_stat = require "posix.sys.stat"
+local isreg = require "posix.sys.stat".S_ISREG
+local isdir = require "posix.sys.stat".S_ISDIR
+local unistd = require "posix.unistd"
+
+
+local function has_state()
+	local state_path="/var/gluon/state"
+	local stat=sys_stat.lstat(state_path)
+	if nil~=stat then
+		return 0~=isdir(stat.st_mode)
+	end
+	return false
+end
+
+local function has_neighbours()
+	local neighbours_path="/var/gluon/state/has_neighbours"
+	local stat=sys_stat.stat(neighbours_path)
+	if nil~=stat then
+		return 0~=isreg(stat.st_mode)
+	end
+	return false
+end
+
+local function get_band(channel)
+	if channel >= 1 and channel <=14 then
+		return "wifi24"
+	elseif channel >= 36 and channel <= 165 then
+		return "wifi5"
+	end
+end
+
+local function get_available_wifi_networks()
+	local radios = {}
+	local ssid_counts = {}
+	ssid_counts["wifi24"]={}
+	ssid_counts["wifi5"]={}
+
+	uci:foreach('wireless', 'wifi-device',
+		function(s)
+			radios[s['.name']] = {}
+		end
+	)
+
+	for radio, _ in pairs(radios) do
+		local wifitype = iwinfo.type(radio)
+		local iw = iwinfo[wifitype]
+		if not iw then
+			return nil
+		end
+		local tmplist = iw.scanlist(radio)
+		for _, net in ipairs(tmplist) do
+			if net.mode and net.channel and net.ssid and "Mesh Point"==net.mode then
+				local band = get_band(net.channel)
+				if not ssid_counts[band][net.ssid] then
+					ssid_counts[band][net.ssid]=0
+				end
+				
+				ssid_counts[band][net.ssid]=ssid_counts[band][net.ssid]+1
+			end
+		end
+	end
+	return ssid_counts
+end
+
+
+local function get_domain_list()
+	local list = {}
+	for _, domain_path in ipairs(util.glob('/lib/gluon/domains/*.json')) do
+		local is_primary = 0~=isreg(sys_stat.lstat(domain_path).st_mode)
+		if is_primary then
+			local domain_code = domain_path:match('([^/]+)%.json$')
+			local domain = assert(json.load(domain_path))
+
+			table.insert(list, {
+				domain_code = domain_code,
+				domain_name = domain.domain_names[domain_code],
+				wifi24 = domain.wifi24.mesh.id,
+				wifi5 = domain.wifi5.mesh.id
+			})
+		end
+	end
+
+	table.sort(list, function(a, b) return a.domain_name < b.domain_name end)
+	return list
+end
+
+
+local function to_domain_counts(band_ssid_counts)
+	local domain_code_counts={}
+	local domain_list = get_domain_list()
+	local function get_domaincode(band, ssid)
+		for _, domain in pairs(domain_list) do
+			if domain[band]==ssid then
+				return domain["domain_code"]
+			end
+		end
+	end
+
+	for band, countlist in pairs(band_ssid_counts) do
+		--print(band)
+		for ssid, count in pairs(countlist) do
+			--print(ssid .. ": " ..count)
+			local code = get_domaincode(band, ssid)
+			if nil~=code then
+				--print(code .. ": +" ..count)
+				if nil==domain_code_counts[code] then
+					domain_code_counts[code]=count
+				else
+					domain_code_counts[code]=domain_code_counts[code]+count
+				end
+			end
+		end
+	end
+
+	return domain_code_counts
+end
+
+if not has_state() then
+	print("Device state is not available yet, aborting.")
+	os.exit()
+end
+
+if has_neighbours() then
+	print("Device still has neighbours, no need to rescan.")
+	os.exit()
+end
+
+local selected_domain = uci:get('gluon', 'core', 'domain')
+print("selected domain: " .. selected_domain)
+local networks = get_available_wifi_networks()
+
+local dom_counts = to_domain_counts(networks)
+
+local high = 0
+local high_dom
+for dom, count in pairs(dom_counts) do
+	if count >= high then
+		high=count
+		high_dom=dom
+	end
+end
+print(high_dom .. ": " .. high)
+
+
+local cmd = {[0]="gluon-switch-domain", "--no-reboot", high_dom}
+unistd.execp(cmd[0], cmd)
