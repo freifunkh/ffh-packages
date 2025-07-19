@@ -23,20 +23,10 @@ add_library(watchdog
   watchdog.c
 )
 
-add_library(respondd SHARED respondd.c watchdog.c)
-
 add_executable(ffh-watchdog
   ffh-watchdog.c
 )
 
-
-set_property(TARGET respondd PROPERTY COMPILE_FLAGS "-std=c99 -Wall -Wextra -Wpedantic -Werror")
-target_link_libraries(respondd
-    m
-    json-c::json-c
-    ${UBOX_LIBRARY}
-    ${UBUS_LIBRARY}
-)
 
 set_property(TARGET watchdog PROPERTY COMPILE_FLAGS "-std=c99 -Wall -Wextra -Wpedantic -Werror")
 target_link_libraries(watchdog
@@ -56,6 +46,5 @@ target_link_libraries(ffh-watchdog
 
 
 install(TARGETS watchdog LIBRARY DESTINATION lib)
-install(TARGETS respondd LIBRARY DESTINATION lib/respondd)
 install(TARGETS ffh-watchdog RUNTIME DESTINATION sbin)
 
