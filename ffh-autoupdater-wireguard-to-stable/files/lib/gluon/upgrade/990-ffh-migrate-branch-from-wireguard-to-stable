@@ -1,0 +1,8 @@
+#!/bin/sh
+
+current_branch="$(uci get autoupdater.settings.branch)"
+
+if [ "$current_branch" = "wireguard" ]; then
+	uci set autoupdater.settings.branch='stable'
+	uci commit
+fi
