@@ -11,7 +11,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/ffh-autoupdater-wireguard-to-stable
   SECTION:=gluon
   CATEGORY:=Gluon
-  TITLE:=Switches branch from wireguad to stable.
+  TITLE:=Switches branch from wireguard to stable.
   DEPENDS:=+gluon-core
 endef
 
